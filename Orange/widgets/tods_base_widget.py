@@ -71,10 +71,15 @@ class SingleInputWidget(TODS_BaseWidget):
 
         # self.hyperparameter: {'hyperparameter name': hyperparameter value}
         # self.hyperparameter_list: {'hyperparameter name'}
+        
+        #print("INSIDE BASE: ")
         self.hyperparameter = {}
         for i in self.hyperparameter_list:
+            
             hyper_tmp = getattr(self, i, None)
+            #print(i, hyper_tmp)
             if hyper_tmp is not None:
+                
                 self.hyperparameter[i] = hyper_tmp # eval('self.' + i)
 
         self.id = TODS_BaseWidget.count
@@ -100,9 +105,11 @@ class SingleInputWidget(TODS_BaseWidget):
         self.commit()
         
     def commit(self):
+        #print("INSIDE COMMIT")
         for i in self.hyperparameter_list:
             hyper_tmp = getattr(self, i, None)
             if hyper_tmp is not None:
+                #ƒprint(i, hyper_tmp)
                 self.hyperparameter[i] = hyper_tmp # eval('self.' + i)
 
         self.primitive_info.hyperparameter = self.hyperparameter

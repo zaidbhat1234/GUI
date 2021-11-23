@@ -577,7 +577,7 @@ class OWPythonScript(OWWidget):
 
 #        self.build_pipeline_button = gui.button(self.controlArea, self, 'Recognise', callback=self.recognise)
         self.run_pipeline_button = gui.button(self.controlArea, self, 'Fit', callback=self.fit)
-#        self.run_pipeline_button = gui.button(self.controlArea, self, 'Build Pipeline', callback=self.build_pipeline)
+        self.build_pipeline_button = gui.button(self.controlArea, self, 'Build Pipeline', callback=self.build_pipeline)
         
         self.produce_button = gui.button(self.controlArea, self, 'Produce', callback=self.produce)
 
@@ -668,10 +668,10 @@ class OWPythonScript(OWWidget):
         for i in range(r):
             for j in range(c):
                 #change to 1 to make that button work
-                if j==100:
+                if j==1:
                     #Z: Make this generic here dont hard code video name column index
-#                    video_path = media_dir + '/'+ str(df.iloc[i,1])
-#                    print("VIDEO PATH: ", video_path)
+                    #video_path = media_dir + '/'+ str(df.iloc[i,1])
+                    #print("VIDEO PATH: ", video_path)
 
                     self.showBtn = gui.button(self.controlArea, self, str(df.iloc[i,j]), callback=self.display)
                     self.cond_list.setCellWidget(i,j,self.showBtn)
@@ -907,7 +907,10 @@ class OWPythonScript(OWWidget):
 
     def build_pipeline(self):
         print('build_pipeline')
-        build_pipeline(self.output_list_ending, self.primitive_mapping, stdout=self.console)
+#        self.config  = build_pipeline(self.output_list_ending, self.primitive_mapping, stdout=self.console)
+        self.pipeline_desc  = build_pipeline(self.output_list_ending, self.primitive_mapping, stdout=self.console)
+        print(self.pipeline_desc)
+        #print("HH", self.config)
         self.console.new_prompt(sys.ps1) # flush the console
         pass
         
@@ -948,8 +951,8 @@ class OWPythonScript(OWWidget):
         # Build pipeline based on configs
         # Here we can specify the hyperparameters defined in each primitive
         # The default hyperparameters will be used if not specified
-        pretrained = False #Does not work for True right now as the relative path is giving in each [primitive for weights loading
-        alg = 'tsn'
+#        pretrained = False #Does not work for True right now as the relative path is giving in each [primitive for weights loading
+#        alg = 'tsn'
 #        for i in range(0, len(self.output_list_ending)):
 #            for j in ['tsn', 'tsm','r2p1d','r3d','i3d','eco']:
 #                print(self.output_list_ending[i].python_path, "PYTHON PATH", self.output_list_ending[i].id, self.output_list_ending[i].hyperparameter, self.output_list_ending[i].ancestors )
@@ -961,12 +964,19 @@ class OWPythonScript(OWWidget):
         
         #print(alg,pretrained)
         #print("Console: ", self.console, type(self.console))
-        config = {
-            "algorithm": alg,
-            "load_pretrained": pretrained,
-        }
-        pipeline = build_pipeline(config)
-
+#        config = {
+#            "algorithm": alg,
+#            "load_pretrained": pretrained,
+#        }
+#        print(self.config)
+#        print(self.config, "Final Config")
+#        pipeline1 = build_pipeline(config)
+#        data1 = pipeline1.to_json()
+#        with open('example_pipeline1.json', 'w') as f:
+#            f.write(data1)
+#        print(pipeline1, "KKKKKKKKKKKJSFSHFJSKJD")
+        pipeline = self.pipeline_desc
+#        pipeline = build_pipeline(self.config)
         # Fit
         _, fitted_pipeline = fit(train_dataset=train_dataset,
                                  train_media_dir=train_media_dir,
@@ -974,6 +984,7 @@ class OWPythonScript(OWWidget):
                                  pipeline=pipeline)
 
         # Save the fitted pipeline
+        #change using self.output_list_ending[0].hyperparameter['dataset_folder']
         save_path = '/Users/zaidbhat/autovideo/datasets/hmdb6/fitted_pipeline'
         import torch
         torch.save(fitted_pipeline, save_path)
@@ -1019,6 +1030,7 @@ class OWPythonScript(OWWidget):
     def pipeline_wrapping(self, pipline_in):
         #print("Pipline_in: ", pipline_in, self.primitive_info )
         self.output_list = pipline_in[0]
+        print("OUTPUT LIST: ", self.output_list)
         self.ancestors_path = pipline_in[1]
         #print("out", self.output_list, self.ancestors_path)
         self.primitive_info.ancestors['inputs'] = self.ancestors_path
@@ -1028,10 +1040,12 @@ class OWPythonScript(OWWidget):
         self.output_list_ending = self.output_list + [self.primitive_info]
 
         self.primitive_mapping = {}
+        print("OUPUT LENGTH: ", len(self.output_list_ending))
         for i in range(0, len(self.output_list_ending)):
+            
             self.primitive_mapping[self.output_list_ending[i].id] = i
-
-
+        print(self.primitive_mapping)
+        
 
 class VideoPlayer2(OWWidget):
     name = "Pipeline1 "
@@ -1042,17 +1056,22 @@ class VideoPlayer2(OWWidget):
 
     def __init__(self, video_path = None):
         super().__init__()
-        box = gui.vBox(self, 'Output') #stretch  = 100
-        self.video = QVideoWidget(box)
-        self.video.resize(320, 240)
+        self.splitCanvas = QSplitter(Qt.Vertical, self.mainArea)
+        self.mainArea.layout().addWidget(self.splitCanvas)
+        self.box = gui.vBox(self, 'Output') #stretch  = 100
+        self.splitCanvas.addWidget(self.box)
+        self.video = QVideoWidget(self.box)
+#        self.video.setFullScreen(True)
+        self.video.resize(620, 250)
         self.video.move(0, 0)
-        self.player = QMediaPlayer(box)
+        self.player = QMediaPlayer(self.box)
         self.player.setVideoOutput(self.video)
-        print("BBBB")
+#        print("BBBB")
         #video_path ="/Users/zaidbhat/Desktop/12.mov"
         
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(video_path)))#"/Users/zaidbhat/autovideo/datasets/hmdb6/media/_Boom_Snap_Clap__challenge_clap_u_nm_np1_fr_med_0.avi"
-        execute_button = gui.button(self, self, 'Run Video', callback=self.callback1)
+        self.execute_button = gui.button(self.mainArea, self, 'Run Script', callback=self.callback1)
+#        execute_button = gui.button(self, self, 'Run Video', callback=self.callback1)
 #        execute_button.show()
 #        b = QPushButton('start')
 #        b.clicked.connect(self.callback)

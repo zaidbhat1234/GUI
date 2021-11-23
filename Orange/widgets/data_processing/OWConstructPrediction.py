@@ -41,8 +41,8 @@ class OWConstructPrediction(TODS_BaseWidget):
     # set default hyperparameters here
     test_treatment = Setting(0)
     autosend = Setting(True)
-    use_columns_buf = Setting(())
-    use_columns = ()
+    use_columns_buf = Setting([0,1])
+    use_columns = ([0,1])
     exclude_columns_buf = Setting(())
     exclude_columns = ()
 
@@ -61,9 +61,8 @@ class OWConstructPrediction(TODS_BaseWidget):
         
         # Info will be passed
         self.hyperparameter = {'use_columns':self.use_columns,
-                                'exclude_columns':self.exclude_columns,                             
                             }
-        self.python_path = 'd3m.primitives.tods.data_processing.construct_predictions'
+        self.python_path = 'd3m.primitives.autovideo.common.construct_predictions'
         self.id = TODS_BaseWidget.count
 
         self.primitive_info = PrimitiveInfo(python_path = self.python_path,

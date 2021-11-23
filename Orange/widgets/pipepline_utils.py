@@ -16,13 +16,18 @@ def build_pipeline(pipepline_info, pipepline_mapping, stdout=None):
     pipeline_description = Pipeline()
     pipeline_description.add_input(name='inputs')
     data1 = None
+    dict_hyper = {}
     for primitive_info in pipepline_info:
-        #print("PRIMITIVES: ")
+        
+        #print("PIPELINE DESCRIPTOION: ", pipeline_description)
+#        print("PPPPP: ", primitive_info)
+#        print("PRIMITIVES: ")
         print(primitive_info.python_path)
         print(primitive_info.hyperparameter)
         print(primitive_info.ancestors)
 
         if primitive_info.python_path == 'HEAD':
+            dataset_fullname = "/Users/zaidbhat/autovideo/datasets/hmdb6"
             dataset_fullname = primitive_info.hyperparameter['dataset_folder']
             data1 = dataset_fullname
             print(dataset_fullname)
@@ -38,18 +43,27 @@ def build_pipeline(pipepline_info, pipepline_mapping, stdout=None):
             # print(primitive_info.python_path)
             primitive = index.get_primitive(primitive_info.python_path)
             step = PrimitiveStep(primitive=primitive)
+#            print("STEP", step, primitive)
 
             hyperparameters = primitive_info.hyperparameter
             ancestors = primitive_info.ancestors
-
+#            print("HYPER: ", hyperparameters, ancestors)
             # add add_inputs
             # print(ancestors)
-
+            flag = 0
+            #alg = None
             if ancestors['inputs'] != 0:
                 for ances_key in ancestors.keys():
-                    print(ances_key, ancestors[ances_key], pipepline_mapping[ancestors[ances_key]] - 1)
+#                    print("CONST: ", ances_key, ancestors[ances_key], pipepline_mapping)
+#                    print("KKKK",ances_key, ancestors[ances_key], pipepline_mapping[ancestors[ances_key]] - 1)
 
                     step_num = pipepline_mapping[ancestors[ances_key]] - 1
+#                    if 'recognition' in str(primitive):
+#                        dict_hyper['algorithm'] = str(primitive).split('.')[-1]
+#                        flag = 1
+#                        step.add_argument(name='outputs', argument_type=ArgumentType.CONTAINER, data_reference='steps.' + str(step_num) + '.produce')
+#                        step.add_argument(name=ances_key, argument_type=ArgumentType.CONTAINER, data_reference='steps.' + str(step_num) + '.produce')
+#                    else:
                     step.add_argument(name=ances_key, argument_type=ArgumentType.CONTAINER, data_reference='steps.' + str(step_num) + '.produce')
 
             else:
@@ -58,30 +72,44 @@ def build_pipeline(pipepline_info, pipepline_mapping, stdout=None):
             # add add_hyperparameter
             for hyper in hyperparameters.keys():
                 # print(hyper, hyperparameters[hyper], type(hyperparameters[hyper]))
-
+                
+                
                 hyper_value = hyperparameters[hyper]
-
+                if hyper =='load_pretrained':
+#                    print(hyper_value,"KKKAKAKAKKAKAKAKKA")
+                    if hyper_value =='False':
+                        hyper_value = False
+                    else:
+                        hyper_value = True
+#                    print(hyper_value, type(hyper_value))
+#                if flag ==1:
+#
+#                    dict_hyper[str(hyper)] = hyper_value
+                    
                 step.add_hyperparameter(name=hyper, argument_type=ArgumentType.VALUE, data=hyper_value)
 
             step.add_output('produce')
             pipeline_description.add_step(step)
 
             # print('\n')
-
+#        data = pipeline_description.to_json()
+    #print("Pipeline Description:", data)
     # Output to json
     data = pipeline_description.to_json()
     with open('example_pipeline.json', 'w') as f:
         f.write(data)
-        print(data)
+        #print("HERE:  ", data)
 
-    # yaml = pipeline_description.to_yaml()
-    # with open('example_pipeline.yml', 'w') as f:
-    #     f.write(yaml)
+#     yaml = pipeline_description.to_yaml()
+#     with open('example_pipeline.yml', 'w') as f:
+#         f.write(yaml)
     # print(yaml)
     #print("KKKKK", data1)
+    #print("DICT: ", dict_hyper)
     sys.stdout.flush()
     sys.stdout = default_stdout
-
+    return pipeline_description
+#    return dict_hyper
 
 import sys
 import argparse

@@ -395,7 +395,7 @@ def main(argv=None):
                       help="Don't show splash screen.")
     parser.add_option("-l", "--log-level",
                       help="Logging level (0, 1, 2, 3, 4)",
-                      type="int", default=1)
+                      type="int", default=4)
     parser.add_option("--style",
                       help="QStyle to use",
                       type="str", default=None)

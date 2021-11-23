@@ -2,8 +2,8 @@
 # THIS FILE IS GENERATED FROM ORANGE SETUP.PY
 short_version = '3.27.0'
 version = '3.27.0'
-full_version = '3.27.0.dev0+0565b67'
-git_revision = '0565b671d1b17e6fc7ba5efd1eba3b861b97d7ad'
+full_version = '3.27.0.dev0+7e73748'
+git_revision = '7e73748afb0a642e3a1b7b9fa845e1b669e1cbc2'
 release = False
 
 if not release:

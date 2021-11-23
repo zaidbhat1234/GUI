@@ -18,7 +18,7 @@ from Orange.widgets.utils.widgetpreview import WidgetPreview
 from Orange.widgets.utils.state_summary import format_summary_details
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.tods_base_widget import SingleInputWidget
-from tods.data_processing.DatasetToDataframe import *
+from autovideo.common.dataset_to_dataframe import *
 
 class OWDataset2DataFrame(SingleInputWidget):
     name = "Dataset2DataFrame"

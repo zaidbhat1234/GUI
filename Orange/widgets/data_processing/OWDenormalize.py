@@ -19,7 +19,7 @@ from Orange.widgets.utils.state_summary import format_summary_details
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.tods_base_widget import SingleInputWidget
 
-class OWColumnParser(SingleInputWidget):
+class OWDenormalize(SingleInputWidget):
     name = "Denormalize"
     description = ("Converting a Dataset with multiple tabular resources into a Dataset with only one tabular resource.")
     icon = "icons/denormalize.svg"
@@ -52,15 +52,9 @@ class OWColumnParser(SingleInputWidget):
     replace_index_columns = Setting(True)
     fuzzy_time_parsing = Setting(True)
 
-    hyperparameter_list = ['use_columns',
-                            'exclude_columns',
-                            'return_result',
-                            'add_index_columns',
-                            'parse_categorical_target_columns',
-                            'replace_index_columns',
-                            'fuzzy_time_parsing',                             
+    hyperparameter_list = [
                             ]
-    python_path = 'd3m.primitives.tods.data_processing.column_parser'
+    python_path = 'd3m.primitives.autovideo.common.denormalize'
     # def __init__(self):
     #     super().__init__()
     #     self.primitive_list.append("primitive"+str(len(self.primitive_list)+1))
@@ -89,26 +83,26 @@ class OWColumnParser(SingleInputWidget):
         box = gui.widgetBox(self.controlArea, "Hyperparameter")
 
         gui.separator(self.controlArea)       
-
-        gui.lineEdit(box, self, "use_columns_buf", label='Column index to use when use_semantic_types is activated. Tuple, e.g. (0,1,2)',
-                     validator=None, callback=self._use_columns_callback)
-
-        gui.lineEdit(box, self, "exclude_columns_buf", label='Column index to exclude when use_semantic_types is activated. Tuple, e.g. (0,1,2)',
-                     validator=None, callback=self._exclude_columns_callback)
-
-        gui.comboBox(box, self, "return_result", label='Output results.', items=['new', 'append', 'replace'],
-                    sendSelectedValue = True,
-                    callback=self.settings_changed)
-
-        gui.checkBox(box, self, "add_index_columns", label='add_index_columns',  callback=self.settings_changed)
-
-        gui.checkBox(box, self, "parse_categorical_target_columns", label='parse_categorical_target_columns',  callback=self.settings_changed)
-
-        gui.checkBox(box, self, "replace_index_columns", label='replace_index_columns',  callback=self.settings_changed)
-
-        gui.checkBox(box, self, "fuzzy_time_parsing", label='fuzzy_time_parsing',  callback=self.settings_changed)         
-
-        gui.auto_apply(box, self, "autosend", box=False)
+#
+#        gui.lineEdit(box, self, "use_columns_buf", label='Column index to use when use_semantic_types is activated. Tuple, e.g. (0,1,2)',
+#                     validator=None, callback=self._use_columns_callback)
+#
+#        gui.lineEdit(box, self, "exclude_columns_buf", label='Column index to exclude when use_semantic_types is activated. Tuple, e.g. (0,1,2)',
+#                     validator=None, callback=self._exclude_columns_callback)
+#
+#        gui.comboBox(box, self, "return_result", label='Output results.', items=['new', 'append', 'replace'],
+#                    sendSelectedValue = True,
+#                    callback=self.settings_changed)
+#
+#        gui.checkBox(box, self, "add_index_columns", label='add_index_columns',  callback=self.settings_changed)
+#
+#        gui.checkBox(box, self, "parse_categorical_target_columns", label='parse_categorical_target_columns',  callback=self.settings_changed)
+#
+#        gui.checkBox(box, self, "replace_index_columns", label='replace_index_columns',  callback=self.settings_changed)
+#
+#        gui.checkBox(box, self, "fuzzy_time_parsing", label='fuzzy_time_parsing',  callback=self.settings_changed)
+#
+#        gui.auto_apply(box, self, "autosend", box=False)
 
         self.data = None
         self.info.set_input_summary(self.info.NoInput)
@@ -156,4 +150,4 @@ class OWColumnParser(SingleInputWidget):
 
 
 if __name__ == "__main__":
-    WidgetPreview(OWColumnParser).run(Orange.data.Table("iris"))
+    WidgetPreview(OWDenormalize).run(Orange.data.Table("iris"))
