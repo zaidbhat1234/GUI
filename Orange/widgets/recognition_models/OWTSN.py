@@ -43,18 +43,19 @@ class OWTSN(TODS_BaseWidget):
     resizing_enabled = False
 
 
-    # set default hyperparameters here
+#    # set default hyperparameters here
+    test_treatment = Setting(0)
     autosend = Setting(True)
-
-    contamination = Setting(0.1)
-    use_columns_buf = Setting(())
-    use_columns = ()
-    exclude_columns_buf = Setting(())
-    exclude_columns = ()
-    #modality = Setting('new')
-    use_semantic_types = Setting(False)
-    add_index_columns = Setting(False)
-    error_on_no_input = Setting(True)
+#
+#    contamination = Setting(0.1)
+#    use_columns_buf = Setting(())
+#    use_columns = ()
+#    exclude_columns_buf = Setting(())
+#    exclude_columns = ()
+#    #modality = Setting('new')
+#    use_semantic_types = Setting(False)
+#    add_index_columns = Setting(False)
+#    error_on_no_input = Setting(True)
 
 
 #Having these causes it to not run on my machine, check the default values in UROVIDEO  TSN file only those work
@@ -63,13 +64,16 @@ class OWTSN(TODS_BaseWidget):
 #    epochs = Setting(5)
 #    num_epochs = Setting(5)
     modality = Setting('RGB')
-    load_pretrained = Setting('True')
-
-
-    BoundedInt = Setting(10)
-    BoundedFloat = Setting(10.0)
-    primitive = TSNPrimitive
-
+    load_pretrained = Setting(True)
+#    modality = ('RGB')
+#    load_pretrained = (True)
+    
+#    BoundedInt = Setting(10)
+#    BoundedFloat = Setting(10.0)
+#    primitive = TSNPrimitive
+#
+#    hyperparameter_list = ['modality', 'load_pretrained'
+#                            ]
 
 
     def __init__(self):
@@ -115,13 +119,13 @@ class OWTSN(TODS_BaseWidget):
 #        gui.lineEdit(box, self, "epochs", label='Number of epoch for training',
 #                     validator=None, callback=None)
 
-        gui.comboBox(box, self, "modality", sendSelectedValue=True, label='Modality.', items=['RGB', 'RGBDiff', 'Flow'], )
-        gui.comboBox(box, self, "load_pretrained", sendSelectedValue=True, label='Load Pretrained.', items=['True', 'False'], )
+        gui.comboBox(box, self, "modality", sendSelectedValue=True, label='Modality.', items=['RGB', 'RGBDiff', 'Flow'], callback=self._use_columns_callback)
+        gui.comboBox(box, self, "load_pretrained", sendSelectedValue=True, label='Load Pretrained.', items=['True', 'False'], callback=self._exclude_columns_callback)
 
 
         # Only for test
         gui.button(box, self, "Print Hyperparameters", callback=self._print_hyperparameter)
-
+        gui.auto_apply(box, self, "autosend", box=False)
     
         self.data = None
         self.info.set_input_summary(self.info.NoInput)
@@ -129,19 +133,19 @@ class OWTSN(TODS_BaseWidget):
 
 
     def _use_columns_callback(self):
-#        self.use_columns = eval(''.join(self.use_columns_buf))
+#        self.modality = eval(''.join(self.modality_buf))
         self.settings_changed()
 
     def _exclude_columns_callback(self):
-#        self.exclude_columns = eval(''.join(self.exclude_columns_buf))
+#        self.load_pretrained = eval(''.join(self.load_pretrained_buf))
         self.settings_changed()
     def _print_hyperparameter(self):
 #        print(self.num_workers, type(self.num_workers))
 #        print(self.batch_size, type(self.batch_size))
 #        print(self.epochs, type(self.epochs))
-        print(self.return_result, type(self.return_result))
+        print(self.modality, type(self.modality))
         print(self.load_pretrained, type(self.load_pretrained))
-
+#        self.commit()
 
     @Inputs.pipline_in1
     def set_pipline_in1(self, pipline_in1):
@@ -166,17 +170,17 @@ class OWTSN(TODS_BaseWidget):
         self.exist_both_inputs()
 
 
-#    def settings_changed(self):
-#        self.commit()
+    def settings_changed(self):
+        self.commit()
 
-#    def commit(self):
-#        self.hyperparameter['use_columns'] = self.use_columns
-#        self.hyperparameter['exclude_columns'] = self.exclude_columns
-#
-#        self.primitive_info.hyperparameter = self.hyperparameter
-#
-#        if self.Inputs.pipline_in is not None:
-#            self.Outputs.pipline_out.send([self.output_list + [self.primitive_info], self.id])
+    def commit(self):
+        self.hyperparameter['modality'] = self.modality
+        self.hyperparameter['load_pretrained'] = self.load_pretrained
+
+        self.primitive_info.hyperparameter = self.hyperparameter
+
+        if self.Inputs.pipline_in1 is not None and self.Inputs.pipline_in2 is not None:
+            self.Outputs.pipline_out.send([self.output_list + [self.primitive_info], self.id])
 
     def exist_both_inputs(self):
         if self.pipline_in1_flag and self.pipline_in2_flag:
@@ -203,6 +207,7 @@ class OWTSN(TODS_BaseWidget):
             self.primitive_info.ancestors['outputs'] = ancestors_path_sub2
 
             output_list.append(self.primitive_info)
+            self.output_list = output_list
             self.Outputs.pipline_out.send([output_list, self.id])
 
             return

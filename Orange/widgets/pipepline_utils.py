@@ -98,7 +98,7 @@ def build_pipeline(pipepline_info, pipepline_mapping, stdout=None):
     data = pipeline_description.to_json()
     with open('example_pipeline.json', 'w') as f:
         f.write(data)
-        #print("HERE:  ", data)
+        print(data)
 
 #     yaml = pipeline_description.to_yaml()
 #     with open('example_pipeline.yml', 'w') as f:

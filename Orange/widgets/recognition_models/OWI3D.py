@@ -19,10 +19,9 @@ from Orange.widgets.utils.widgetpreview import WidgetPreview
 from Orange.widgets.utils.state_summary import format_summary_details
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.tods_base_widget import SingleInputWidget
+from autovideo.recognition.i3d_primitive import *
 
-from tods.detection_algorithm.PyodCOF import *
-
-class OWCOF(SingleInputWidget):
+class OWI3D(SingleInputWidget):
     name = "Inflated 3D ConvNet (I3D)"
     description = ("Action Recognoition with I3D model")
     icon = "icons/I3D40.svg"
@@ -49,13 +48,13 @@ class OWCOF(SingleInputWidget):
 
     num_workers = Setting(1)
     batch_size = Setting(64)
-    num_epochs = Setting(5)
-    return_result = Setting('RGB')
+#    num_epochs = Setting(5)
+#    return_result = Setting('RGB')
 
 
     BoundedInt = Setting(10)
     BoundedFloat = Setting(10.0)
-    primitive = COFPrimitive
+    primitive = I3DPrimitive
 
 
 
@@ -91,11 +90,11 @@ class OWCOF(SingleInputWidget):
 
         gui.lineEdit(box, self, "batch_size", label='The batch size of training',
                      validator=None, callback=None)
-
-        gui.lineEdit(box, self, "num_epochs", label='Number of epoch for training',
-                     validator=None, callback=None)
-
-        gui.comboBox(box, self, "return_result", sendSelectedValue=True, label='Output results.', items=['RGB', 'RGBDiff', 'Flow'], )
+#
+#        gui.lineEdit(box, self, "num_epochs", label='Number of epoch for training',
+#                     validator=None, callback=None)
+#
+#        gui.comboBox(box, self, "return_result", sendSelectedValue=True, label='Output results.', items=['RGB', 'RGBDiff', 'Flow'], )
 
 
         # Only for test
@@ -121,4 +120,4 @@ class OWCOF(SingleInputWidget):
     
 
 if __name__ == "__main__":
-    WidgetPreview(OWCOF).run(Orange.data.Table("iris"))   
+    WidgetPreview(OWI3D).run(Orange.data.Table("iris"))   
