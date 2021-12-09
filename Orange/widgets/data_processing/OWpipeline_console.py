@@ -19,7 +19,7 @@ from AnyQt.QtGui import (
     QColor, QBrush, QPalette, QFont, QTextDocument,
     QSyntaxHighlighter, QTextCharFormat, QTextCursor, QKeySequence,
 )
-from AnyQt.QtCore import Qt, QRegExp, QByteArray, QItemSelectionModel, QSize
+from AnyQt.QtCore import Qt, QRegExp, QByteArray, QItemSelectionModel, QSize, QThread, pyqtSignal, QObject
 
 from Orange.data import Table
 from Orange.base import Learner, Model
@@ -41,9 +41,10 @@ from orangewidget.utils.combobox import ComboBoxSearch
 from AnyQt.QtCore import Qt, QRegExp, QByteArray, QItemSelectionModel, QSize, QPersistentModelIndex
 
 
-
-
-
+from pyqtgraph import PlotWidget, plot
+import pyqtgraph as pg
+from time import sleep
+import numpy as np
 
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import QDir, Qt, QUrl, QSize
@@ -427,6 +428,45 @@ if TYPE_CHECKING:
     _ScriptData = TypedDict("_ScriptData", {
         "name": str, "script": str, "filename": Optional[str]
     })
+    
+    
+class Worker1(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+    def __init__(self, graph_widget = None):
+        QThread.__init__(self)
+        self.graph_widget = graph_widget
+        print("INSIDE", self.graph_widget)
+#        self.stopped = event
+        
+    def run(self):
+    
+        """Long-running task."""
+        for i in range(5):
+            sleep(5)
+            print("HH")
+            graph = pd.read_csv("/Users/zaidbhat/GUI/training.csv", index_col = None)
+            c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
+            print("HERE:", c1,c2)
+            self.graph_widget.plot(c1, c2)
+            self.progress.emit(i + 1)
+        self.finished.emit()
+    
+
+class Worker(QThread):
+#    finished = pyqtSignal()
+#    progress = pyqtSignal(int)
+    update = pyqtSignal()
+    def __init__(self, event=True, graph_widget = None):
+        QThread.__init__(self)
+        self.graph_widget = graph_widget
+        self.stopped = event
+        
+    def run(self):
+    
+        while self.stopped:#not self.stopped.wait(0.02):
+#            print("KK")
+            self.update.emit()
 
 
 class OWPythonScript(OWWidget):
@@ -615,7 +655,20 @@ class OWPythonScript(OWWidget):
         self.cond_list = QTableWidget(
             box, showGrid=True, selectionMode=QTableWidget.NoSelection)
         box.layout().addWidget(self.cond_list)
-
+        
+        
+        
+        
+        
+        box_graph = gui.vBox(self, 'Graph') #stretch  = 100
+        self.graph_widget  = pg.PlotWidget()
+        box_graph.layout().addWidget(self.graph_widget)
+        
+        
+        
+        
+        
+        
         self.consoleBox = gui.vBox(self, 'Console')
         self.splitCanvas.addWidget(self.consoleBox)
         self.console = PythonConsole({}, self)
@@ -904,7 +957,7 @@ class OWPythonScript(OWWidget):
         run_pipeline(self.output_list_ending, stdout=self.console)
         self.console.new_prompt(sys.ps1) # flush the console
         pass
-
+    
     def build_pipeline(self):
         print('build_pipeline')
 #        self.config  = build_pipeline(self.output_list_ending, self.primitive_mapping, stdout=self.console)
@@ -932,12 +985,13 @@ class OWPythonScript(OWWidget):
 #        map_label = {0:'brush_hair', 1:'cartwheel', 2: 'catch', 3:'chew', 4:'clap',5:'climb'}
 #        out = map_label[predictions['label'][0]]
 #        logger.info('Detected Action: %s', out)
-        
+   
     def fit(self):
         from autovideo.utils import set_log_path, logger
         set_log_path('log.txt')
         #print(self.build_pipeline(), "BP")
-        data_dir = self.output_list_ending[0].hyperparameter['dataset_folder']
+#        data_dir = self.output_list_ending[0].hyperparameter['dataset_folder']
+        data_dir = "/Users/zaidbhat/autovideo/datasets/hmdb6"
 #        for i in range(0, len(self.output_list_ending)):
 #            print("LLL", self.output_list_ending[i].hyperparameter)
         train_table_path = os.path.join(data_dir, 'train.csv')
@@ -978,6 +1032,28 @@ class OWPythonScript(OWWidget):
         pipeline = self.pipeline_desc
 #        pipeline = build_pipeline(self.config)
         # Fit
+        
+        
+        #Method 2: Works only static not dynamic
+#        stop_flag = Event()
+#        self.timer_thread = Worker()
+#        self.timer_thread.update.connect(self.update_graph)
+#        self.timer_thread.start()
+        
+#       #Method 3: Only static does not work dynamic
+#        self.thread = QThread()
+#        print("GW", self.graph_widget)
+#        self.worker = Worker1(self.graph_widget)
+#        self.worker.moveToThread(self.thread)
+#        # Step 5: Connect signals and slots
+#        self.thread.started.connect(self.worker.run)
+#        self.worker.finished.connect(self.thread.quit)
+#
+#        self.thread.start()
+##
+#
+        
+        
         _, fitted_pipeline = fit(train_dataset=train_dataset,
                                  train_media_dir=train_media_dir,
                                  target_index=target_index,
@@ -988,6 +1064,33 @@ class OWPythonScript(OWWidget):
         save_path = '/Users/zaidbhat/autovideo/datasets/hmdb6/fitted_pipeline'
         import torch
         torch.save(fitted_pipeline, save_path)
+        
+        #Method 1: Works somewhat but error that Qwidget cannot be put on thread)
+        self.worker = GraphPlayer("/Users/zaidbhat/GUI/training.csv")
+        #Does not work when putting on GPU
+#        self.thread = QThread()
+#         # Step 4: Move worker to the thread
+#        self.worker.moveToThread(self.thread)
+#        # Step 5: Connect signals and slots
+#        self.thread.started.connect(self.worker.callback1)
+#        self.worker.finished.connect(self.thread.quit)
+#        self.worker.finished.connect(self.worker.deleteLater)
+#        self.thread.finished.connect(self.thread.deleteLater)
+##        self.worker.progress.connect(self.reportProgress)
+#        # Step 6: Start the thread
+#        self.thread.start()
+        self.worker.show()
+        
+        
+
+
+        
+    def update_graph(self):
+        print("GRAPH")
+        graph = pd.read_csv("/Users/zaidbhat/GUI/training.csv", index_col = None)
+        c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
+#            print("HERE:", c1,c2)
+        self.graph_widget.plot(c1, c2)
     def produce(self):
         from autovideo.utils import set_log_path, logger
         set_log_path('log.txt')
@@ -1082,6 +1185,56 @@ class VideoPlayer2(OWWidget):
 #        self.video.show()
         self.player.play()
 
+
+class GraphPlayer(OWWidget):
+    name = "Graph"
+    description = "Console1 "
+    icon = "icons/PythonScript.svg"
+    priority = 31513
+    keywords = ["build2", "run2"]
+
+    def __init__(self, graph_path = None):
+        super().__init__()
+        self.splitCanvas = QSplitter(Qt.Vertical, self.mainArea)
+        self.mainArea.layout().addWidget(self.splitCanvas)
+        self.box = gui.vBox(self, 'Output') #stretch  = 100
+#        self.splitCanvas.addWidget(self.box)
+#        self.video = QVideoWidget(self.box)
+##        self.video.setFullScreen(True)
+#        self.video.resize(620, 250)
+#        self.video.move(0, 0)
+#        self.player = QMediaPlayer(self.box)
+#        self.player.setVideoOutput(self.video)
+##        print("BBBB")
+#        #video_path ="/Users/zaidbhat/Desktop/12.mov"
+#
+#        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(video_path)))#"/Users/zaidbhat/autovideo/datasets/hmdb6/media/_Boom_Snap_Clap__challenge_clap_u_nm_np1_fr_med_0.avi"
+        self.graph_path = graph_path
+        graph = pd.read_csv(graph_path, index_col = None)
+        self.graphWidget = pg.PlotWidget()
+        self.splitCanvas.addWidget(self.graphWidget)
+#        self.setCentralWidget(self.graphWidget)
+        c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
+        print("HERE:", c1,c2)
+        self.graphWidget.plot(c1, c2)
+        
+        self.execute_button = gui.button(self.mainArea, self, 'Run Script', callback=self.callback1)
+#        execute_button = gui.button(self, self, 'Run Video', callback=self.callback1)
+#        execute_button.show()
+#        b = QPushButton('start')
+#        b.clicked.connect(self.callback)
+#        b.show()
+
+    def callback1(self):
+        return
+        while True:
+            graph = pd.read_csv(self.graph_path, index_col = None)
+            c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
+#            print("HERE:", c1,c2)
+            self.graphWidget.plot(c1, c2)
+#        self.player.setPosition(0) # to start at the beginning of the video every time
+#        self.video.show()
+#        self.player.play()
 
 
 
