@@ -990,8 +990,8 @@ class OWPythonScript(OWWidget):
         from autovideo.utils import set_log_path, logger
         set_log_path('log.txt')
         #print(self.build_pipeline(), "BP")
-#        data_dir = self.output_list_ending[0].hyperparameter['dataset_folder']
-        data_dir = "/Users/zaidbhat/autovideo/datasets/hmdb6"
+        data_dir = self.output_list_ending[0].hyperparameter['dataset_folder']
+#        data_dir = "/Users/zaidbhat/autovideo/datasets/hmdb6"
 #        for i in range(0, len(self.output_list_ending)):
 #            print("LLL", self.output_list_ending[i].hyperparameter)
         train_table_path = os.path.join(data_dir, 'train.csv')
