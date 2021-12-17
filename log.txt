@@ -1,1 +1,0 @@
-[INFO:24699 tsn_primitive:199 2021-12-10 08:46:55,064] Epoch 0, training accuracy 60.0000, validation accuracy 0.0000
