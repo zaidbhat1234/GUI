@@ -59,12 +59,12 @@ class OWTSN(TODS_BaseWidget):
 
 
 #Having these causes it to not run on my machine, check the default values in UROVIDEO  TSN file only those work
-#    num_workers = Setting(0)
-#    batch_size = Setting(1)
-#    epochs = Setting(5)
-#    num_epochs = Setting(5)
+    num_workers = Setting(0)
+    batch_size = Setting(2)
+    epochs = Setting(5)
+    num_segments = Setting(3)
     modality = Setting('RGB')
-    load_pretrained = Setting(True)
+    load_pretrained = Setting(False)
 #    modality = ('RGB')
 #    load_pretrained = (True)
     
@@ -86,8 +86,7 @@ class OWTSN(TODS_BaseWidget):
         self.pipline_in1_flag, self.pipline_in2_flag = False, False
         
         # Info will be passed
-        self.hyperparameter = { 'modality':self.modality, 'load_pretrained':self.load_pretrained
-                            } #'num_workers':self.num_workers, 'batch_size': self.batch_size,'epochs':self.epochs,
+        self.hyperparameter = { 'modality':self.modality, 'load_pretrained':self.load_pretrained, 'batch_size': self.batch_size,'epochs':self.epochs, 'num_segments': self.num_segments, 'num_workers': self.num_workers}
         self.python_path = 'd3m.primitives.autovideo.recognition.tsn'
         self.id = TODS_BaseWidget.count
 
@@ -113,12 +112,15 @@ class OWTSN(TODS_BaseWidget):
 #            label="The number of subprocesses to use for data loading. 0 means that the data will be loaded in the main process",
 #        )
 #
-#        gui.lineEdit(box, self, "batch_size", label='The batch size of training',
-#                     validator=None, callback=None)
-#
-#        gui.lineEdit(box, self, "epochs", label='Number of epoch for training',
-#                     validator=None, callback=None)
+        gui.lineEdit(box, self, "num_workers", label='Number of workers',
+                     validator=None, callback=self._use_columns_callback)
+        gui.lineEdit(box, self, "batch_size", label='The batch size of training',
+                     validator=None, callback=self._use_columns_callback)
 
+        gui.lineEdit(box, self, "epochs", label='Number of epoch for training',
+                     validator=None, callback=self._use_columns_callback)
+        gui.lineEdit(box, self, "num_segments", label='Number of segments',
+                     validator=None, callback=self._use_columns_callback)
         gui.comboBox(box, self, "modality", sendSelectedValue=True, label='Modality.', items=['RGB', 'RGBDiff', 'Flow'], callback=self._use_columns_callback)
         gui.comboBox(box, self, "load_pretrained", sendSelectedValue=True, label='Load Pretrained.', items=['True', 'False'], callback=self._exclude_columns_callback)
 
@@ -140,9 +142,10 @@ class OWTSN(TODS_BaseWidget):
 #        self.load_pretrained = eval(''.join(self.load_pretrained_buf))
         self.settings_changed()
     def _print_hyperparameter(self):
-#        print(self.num_workers, type(self.num_workers))
-#        print(self.batch_size, type(self.batch_size))
-#        print(self.epochs, type(self.epochs))
+        print(self.num_workers, type(self.num_workers))
+        print(self.num_segments, type(self.num_segments))
+        print(self.batch_size, type(self.batch_size))
+        print(self.epochs, type(self.epochs))
         print(self.modality, type(self.modality))
         print(self.load_pretrained, type(self.load_pretrained))
 #        self.commit()
@@ -176,7 +179,10 @@ class OWTSN(TODS_BaseWidget):
     def commit(self):
         self.hyperparameter['modality'] = self.modality
         self.hyperparameter['load_pretrained'] = self.load_pretrained
-
+        self.hyperparameter['num_segments'] = self.num_segments
+        self.hyperparameter['num_workers'] = self.num_workers
+        self.hyperparameter['epochs'] = self.epochs
+        self.hyperparameter['batch_size'] = self.batch_size
         self.primitive_info.hyperparameter = self.hyperparameter
 
         if self.Inputs.pipline_in1 is not None and self.Inputs.pipline_in2 is not None:

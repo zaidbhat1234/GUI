@@ -20,15 +20,15 @@ from Orange.widgets.utils.state_summary import format_summary_details
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.tods_base_widget import SingleInputWidget
 from Orange.widgets.tods_base_widget import TODS_BaseWidget, PrimitiveInfo
-
 from autovideo.recognition.tsm_primitive import *
-
 class OWTSM(TODS_BaseWidget):
     name = "Temporal Shift Module (TSM)"
     description = ("Action Recognoition with TSM model")
     icon = "icons/TSM.svg"
     category = "Detection Algorithm"
     keywords = []
+
+
     
     class Inputs:
         pipline_in1 = Input("Inputs", list)
@@ -39,36 +39,19 @@ class OWTSM(TODS_BaseWidget):
     want_main_area = False
     buttons_area_orientatio = Qt.Vertical
     resizing_enabled = False
-    
-    
-    want_main_area = False
-    buttons_area_orientatio = Qt.Vertical
-    resizing_enabled = False
 
 
-    # set default hyperparameters here
-    num_workers = Setting(1)
-    batch_size = Setting(64)
+#    # set default hyperparameters here
+    test_treatment = Setting(0)
+    autosend = Setting(True)
+
+    num_workers = Setting(0)
+    batch_size = Setting(1)
     epochs = Setting(5)
-    return_result = Setting('RGB')
+    num_segments = Setting(3)
     modality = Setting('RGB')
-    load_pretrained = Setting('False')
+    load_pretrained = Setting(False)
 
-    BoundedInt = Setting(10)
-    BoundedFloat = Setting(10.0)
-    
-    # set default hyperparameters here
-#    test_treatment = Setting(0)
-#    autosend = Setting(True)
-#    use_columns_buf = Setting(())
-#    use_columns = ()
-#    exclude_columns_buf = Setting(())
-#    exclude_columns = ()
-#    primitive = TSMPrimitive
-
-    # def __del__(self):
-    #     self.primitive.pop()
-    #     print(self.primitive_list)
 
     def __init__(self):
         super().__init__()
@@ -80,9 +63,7 @@ class OWTSM(TODS_BaseWidget):
         self.pipline_in1_flag, self.pipline_in2_flag = False, False
         
         # Info will be passed
-        self.hyperparameter = {'num_workers':self.num_workers, 'batch_size': self.batch_size,
-                                'epochs':self.epochs, 'modality':self.modality, 'load_pretrained':self.load_pretrained
-                            }
+        self.hyperparameter = { 'modality':self.modality, 'load_pretrained':self.load_pretrained, 'batch_size': self.batch_size,'epochs':self.epochs, 'num_segments': self.num_segments, 'num_workers': self.num_workers}
         self.python_path = 'd3m.primitives.autovideo.recognition.tsm'
         self.id = TODS_BaseWidget.count
 
@@ -98,29 +79,22 @@ class OWTSM(TODS_BaseWidget):
         box = gui.widgetBox(self.controlArea, "Hyperparameter")
 
         gui.separator(self.controlArea)
-
-        gui.doubleSpin(
-            box, self,
-            "num_workers",
-            minv=1,
-            maxv=10,
-            step=1,
-            label="The number of subprocesses to use for data loading. 0 means that the data will be loaded in the main process",
-        )
-
+        gui.lineEdit(box, self, "num_workers", label='Number of workers',
+                     validator=None, callback=self._use_columns_callback)
         gui.lineEdit(box, self, "batch_size", label='The batch size of training',
-                     validator=None, callback=None)
+                     validator=None, callback=self._use_columns_callback)
 
         gui.lineEdit(box, self, "epochs", label='Number of epoch for training',
-                     validator=None, callback=None)
-
-        gui.comboBox(box, self, "return_result", sendSelectedValue=True, label='Output results.', items=['RGB', 'RGBDiff', 'Flow'], )
-        gui.comboBox(box, self, "load_pretrained", sendSelectedValue=True, label='Load Pretrained.', items=['True', 'False'], )
+                     validator=None, callback=self._use_columns_callback)
+        gui.lineEdit(box, self, "num_segments", label='Number of segments',
+                     validator=None, callback=self._use_columns_callback)
+        gui.comboBox(box, self, "modality", sendSelectedValue=True, label='Modality.', items=['RGB', 'RGBDiff', 'Flow'], callback=self._use_columns_callback)
+        gui.comboBox(box, self, "load_pretrained", sendSelectedValue=True, label='Load Pretrained.', items=['True', 'False'], callback=self._exclude_columns_callback)
 
 
         # Only for test
         gui.button(box, self, "Print Hyperparameters", callback=self._print_hyperparameter)
-
+        gui.auto_apply(box, self, "autosend", box=False)
     
         self.data = None
         self.info.set_input_summary(self.info.NoInput)
@@ -128,19 +102,18 @@ class OWTSM(TODS_BaseWidget):
 
 
     def _use_columns_callback(self):
-#        self.use_columns = eval(''.join(self.use_columns_buf))
         self.settings_changed()
 
     def _exclude_columns_callback(self):
-#        self.exclude_columns = eval(''.join(self.exclude_columns_buf))
         self.settings_changed()
     def _print_hyperparameter(self):
         print(self.num_workers, type(self.num_workers))
+        print(self.num_segments, type(self.num_segments))
         print(self.batch_size, type(self.batch_size))
         print(self.epochs, type(self.epochs))
-        print(self.return_result, type(self.return_result))
+        print(self.modality, type(self.modality))
         print(self.load_pretrained, type(self.load_pretrained))
-
+#        self.commit()
 
     @Inputs.pipline_in1
     def set_pipline_in1(self, pipline_in1):
@@ -165,17 +138,20 @@ class OWTSM(TODS_BaseWidget):
         self.exist_both_inputs()
 
 
-#    def settings_changed(self):
-#        self.commit()
+    def settings_changed(self):
+        self.commit()
 
-#    def commit(self):
-#        self.hyperparameter['use_columns'] = self.use_columns
-#        self.hyperparameter['exclude_columns'] = self.exclude_columns
-#
-#        self.primitive_info.hyperparameter = self.hyperparameter
-#
-#        if self.Inputs.pipline_in is not None:
-#            self.Outputs.pipline_out.send([self.output_list + [self.primitive_info], self.id])
+    def commit(self):
+        self.hyperparameter['modality'] = self.modality
+        self.hyperparameter['load_pretrained'] = self.load_pretrained
+        self.hyperparameter['num_segments'] = self.num_segments
+        self.hyperparameter['num_workers'] = self.num_workers
+        self.hyperparameter['epochs'] = self.epochs
+        self.hyperparameter['batch_size'] = self.batch_size
+        self.primitive_info.hyperparameter = self.hyperparameter
+
+        if self.Inputs.pipline_in1 is not None and self.Inputs.pipline_in2 is not None:
+            self.Outputs.pipline_out.send([self.output_list + [self.primitive_info], self.id])
 
     def exist_both_inputs(self):
         if self.pipline_in1_flag and self.pipline_in2_flag:
@@ -202,6 +178,7 @@ class OWTSM(TODS_BaseWidget):
             self.primitive_info.ancestors['outputs'] = ancestors_path_sub2
 
             output_list.append(self.primitive_info)
+            self.output_list = output_list
             self.Outputs.pipline_out.send([output_list, self.id])
 
             return
@@ -217,132 +194,3 @@ class OWTSM(TODS_BaseWidget):
 
 if __name__ == "__main__":
     WidgetPreview(OWTSM).run(Orange.data.Table("iris"))
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-"""
-    
-    
-
-
-    # set default hyperparameters here
-    autosend = Setting(True)
-
-    contamination = Setting(0.1)
-    use_columns_buf = Setting(())
-    use_columns = ()
-    exclude_columns_buf = Setting(())
-    exclude_columns = ()
-#    return_result = Setting('new')
-    use_semantic_types = Setting(False)
-    add_index_columns = Setting(False)
-    error_on_no_input = Setting(True)
-
-    num_workers = Setting(1)
-    batch_size = Setting(64)
-    num_epochs = Setting(5)
-    return_result = Setting('RGB')
-    modality = Setting('RGB')
-    load_pretrained = Setting('False')
-
-    BoundedInt = Setting(10)
-    BoundedFloat = Setting(10.0)
-    primitive = TSMPrimitive
-
-
-
-    
-
-
-    def _use_columns_callback(self):
-        #self.use_columns = eval(''.join(self.use_columns_buf))
-        # print(self.use_columns)
-        self.settings_changed()
-
-    def _exclude_columns_callback(self):
-        self.exclude_columns = eval(''.join(self.exclude_columns_buf))
-        # print(self.exclude_columns)
-        self.settings_changed()
-
-    def _init_ui(self):
-        # implement your user interface here (for setting hyperparameters)
-        gui.separator(self.controlArea)
-        box = gui.widgetBox(self.controlArea, "Hyperparameter")
-        gui.separator(self.controlArea)
-
-        
-
-        gui.doubleSpin(
-            box, self,
-            "num_workers",
-            minv=1,
-            maxv=10,
-            step=1,
-            label="The number of subprocesses to use for data loading. 0 means that the data will be loaded in the main process",
-        )
-
-        gui.lineEdit(box, self, "batch_size", label='The batch size of training',
-                     validator=None, callback=None)
-
-        gui.lineEdit(box, self, "num_epochs", label='Number of epoch for training',
-                     validator=None, callback=None)
-
-        gui.comboBox(box, self, "return_result", sendSelectedValue=True, label='Output results.', items=['RGB', 'RGBDiff', 'Flow'], )
-        gui.comboBox(box, self, "load_pretrained", sendSelectedValue=True, label='Load Pretrained.', items=['True', 'False'], )
-
-
-        # Only for test
-        gui.button(box, self, "Print Hyperparameters", callback=self._print_hyperparameter)
-
-        self.data = None
-        self.info.set_input_summary(self.info.NoInput)
-        self.info.set_output_summary(self.info.NoOutput)
-
-    def _print_hyperparameter(self):
-        print(self.num_workers, type(self.num_workers))
-        print(self.batch_size, type(self.batch_size))
-        print(self.num_epochs, type(self.num_epochs))
-        print(self.return_result, type(self.return_result))
-        print(self.load_pretrained, type(self.load_pretrained))
-
-
-        #self.commit()
-
-    
-
-    
-
-    
-
-if __name__ == "__main__":
-    WidgetPreview(OWTSM).run(Orange.data.Table("iris"))
-"""

@@ -20,11 +20,11 @@ from Orange.widgets.utils.state_summary import format_summary_details
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.tods_base_widget import SingleInputWidget
 from Orange.widgets.tods_base_widget import TODS_BaseWidget, PrimitiveInfo
-from autovideo.recognition.r2p1d_primitive import *
-class OWR2P1D(TODS_BaseWidget):
-    name = "R2P1D"
-    description = ("Action Recognoition with R2P1D model")
-    icon = "icons/R2P1D.svg"
+from autovideo.recognition.r3d_primitive import *
+class OWR3D(TODS_BaseWidget):
+    name = "R3D"
+    description = ("Action Recognoition with R3D model")
+    icon = "icons/R3D.svg"
     category = "Detection Algorithm"
     keywords = []
 
@@ -64,7 +64,7 @@ class OWR2P1D(TODS_BaseWidget):
         
         # Info will be passed
         self.hyperparameter = { 'modality':self.modality, 'load_pretrained':self.load_pretrained, 'batch_size': self.batch_size,'epochs':self.epochs, 'num_segments': self.num_segments, 'num_workers': self.num_workers}
-        self.python_path = 'd3m.primitives.autovideo.recognition.r2p1d'
+        self.python_path = 'd3m.primitives.autovideo.recognition.r3d'
         self.id = TODS_BaseWidget.count
 
         self.primitive_info = PrimitiveInfo(python_path = self.python_path,
@@ -193,4 +193,4 @@ class OWR2P1D(TODS_BaseWidget):
 
 
 if __name__ == "__main__":
-    WidgetPreview(OWR2P1D).run(Orange.data.Table("iris"))
+    WidgetPreview(OWR3D).run(Orange.data.Table("iris"))

@@ -52,7 +52,12 @@ class OWExtractColumn(SingleInputWidget):
     add_index_columns = Setting(False)
 
     python_path = 'd3m.primitives.autovideo.common.extract_columns_by_semantic_types'
-    hyperparameter_list = ['semantic_types'
+    hyperparameter_list = ['semantic_types',
+                            'match_logic',
+                            'negate',
+                            'exclude_columns',
+                            'use_columns',
+                            'add_index_columns',
                             ]
 
     # def __init__(self):
@@ -86,22 +91,22 @@ class OWExtractColumn(SingleInputWidget):
 
         gui.lineEdit(box, self, "semantic_types_buf", label='semantic_types_buf',
                     callback=self._semantic_types_callback)
-#
-#        gui.comboBox(box, self, "match_logic", label='Output match_logic.', items=['all', 'any', 'equal'],
-#                    sendSelectedValue = True,
-#                    callback=self.settings_changed)       
-#
-#        gui.checkBox(box, self, "negate", label='negate', callback=self.settings_changed)
-#
-#        gui.lineEdit(box, self, "use_columns_buf", label='Column index to use when use_semantic_types is activated. Tuple, e.g. (0,1,2)',
-#                     validator=None, callback=self._use_columns_callback)
-#
-#        gui.lineEdit(box, self, "exclude_columns_buf", label='Column index to exclude when use_semantic_types is activated. Tuple, e.g. (0,1,2)',
-#                     validator=None, callback=self._exclude_columns_callback)
-#
-#        gui.checkBox(box, self, "add_index_columns", label='Keep index in the outputs.',  callback=self.settings_changed)         
-#
-#        gui.auto_apply(box, self, "autosend", box=False)
+
+        gui.comboBox(box, self, "match_logic", label='Output match_logic.', items=['all', 'any', 'equal'],
+                    sendSelectedValue = True,
+                    callback=self.settings_changed)
+
+        gui.checkBox(box, self, "negate", label='negate', callback=self.settings_changed)
+
+        gui.lineEdit(box, self, "use_columns_buf", label='Column index to use when use_semantic_types is activated. Tuple, e.g. (0,1,2)',
+                     validator=None, callback=self._use_columns_callback)
+
+        gui.lineEdit(box, self, "exclude_columns_buf", label='Column index to exclude when use_semantic_types is activated. Tuple, e.g. (0,1,2)',
+                     validator=None, callback=self._exclude_columns_callback)
+
+        gui.checkBox(box, self, "add_index_columns", label='Keep index in the outputs.',  callback=self.settings_changed)
+
+        gui.auto_apply(box, self, "autosend", box=False)
 
         self.data = None
         self.info.set_input_summary(self.info.NoInput)

@@ -48,11 +48,13 @@ class OWDenormalize(SingleInputWidget):
     return_result = Setting('replace')
 
     add_index_columns = Setting(True)
-    parse_categorical_target_columns = Setting(False)
-    replace_index_columns = Setting(True)
-    fuzzy_time_parsing = Setting(True)
-
-    hyperparameter_list = [
+    recursive = Setting(True)
+    many_to_many = Setting(False)
+    discard_not_joined_tabular_resources = Setting(False)
+    
+    hyperparameter_list = ['recursive',
+                            'many_to_many',
+                            'discard_not_joined_tabular_resources',
                             ]
     python_path = 'd3m.primitives.autovideo.common.denormalize'
     # def __init__(self):
@@ -65,9 +67,9 @@ class OWDenormalize(SingleInputWidget):
     #                             'exclude_columns':self.exclude_columns,
     #                             'return_result':self.return_result,
     #                             'add_index_columns':self.add_index_columns,
-    #                             'parse_categorical_target_columns':self.parse_categorical_target_columns,
-    #                             'replace_index_columns':self.replace_index_columns,
-    #                             'fuzzy_time_parsing':self.fuzzy_time_parsing,                               
+    #                             'recursive':self.recursive,
+    #                             'many_to_many':self.many_to_many,
+    #                             'discard_not_joined_tabular_resources':self.discard_not_joined_tabular_resources,
     #                         }
     #     
 
@@ -95,14 +97,14 @@ class OWDenormalize(SingleInputWidget):
 #                    callback=self.settings_changed)
 #
 #        gui.checkBox(box, self, "add_index_columns", label='add_index_columns',  callback=self.settings_changed)
-#
-#        gui.checkBox(box, self, "parse_categorical_target_columns", label='parse_categorical_target_columns',  callback=self.settings_changed)
-#
-#        gui.checkBox(box, self, "replace_index_columns", label='replace_index_columns',  callback=self.settings_changed)
-#
-#        gui.checkBox(box, self, "fuzzy_time_parsing", label='fuzzy_time_parsing',  callback=self.settings_changed)
-#
-#        gui.auto_apply(box, self, "autosend", box=False)
+
+        gui.checkBox(box, self, "recursive", label='recursive',  callback=self.settings_changed)
+
+        gui.checkBox(box, self, "many_to_many", label='many_to_many',  callback=self.settings_changed)
+
+        gui.checkBox(box, self, "discard_not_joined_tabular_resources", label='discard_not_joined_tabular_resources',  callback=self.settings_changed)
+
+        gui.auto_apply(box, self, "autosend", box=False)
 
         self.data = None
         self.info.set_input_summary(self.info.NoInput)
@@ -139,9 +141,9 @@ class OWDenormalize(SingleInputWidget):
     #     self.hyperparameter['exclude_columns'] = self.exclude_columns
     #     self.hyperparameter['return_result'] = self.return_result
     #     self.hyperparameter['add_index_columns'] = self.add_index_columns
-    #     self.hyperparameter['parse_categorical_target_columns'] = self.parse_categorical_target_columns
-    #     self.hyperparameter['replace_index_columns'] = self.replace_index_columns
-    #     self.hyperparameter['fuzzy_time_parsing'] = self.fuzzy_time_parsing
+    #     self.hyperparameter['recursive'] = self.recursive
+    #     self.hyperparameter['many_to_many'] = self.many_to_many
+    #     self.hyperparameter['discard_not_joined_tabular_resources'] = self.discard_not_joined_tabular_resources
 
     #     self.primitive_info.hyperparameter = self.hyperparameter
 

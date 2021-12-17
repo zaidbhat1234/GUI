@@ -17,7 +17,7 @@ from AnyQt.QtWidgets import (
 )
 from AnyQt.QtGui import (
     QColor, QBrush, QPalette, QFont, QTextDocument,
-    QSyntaxHighlighter, QTextCharFormat, QTextCursor, QKeySequence,
+    QSyntaxHighlighter, QTextCharFormat, QTextCursor, QKeySequence,QFont
 )
 from AnyQt.QtCore import Qt, QRegExp, QByteArray, QItemSelectionModel, QSize, QThread, pyqtSignal, QObject
 
@@ -445,9 +445,9 @@ class Worker1(QObject):
         for i in range(5):
             sleep(5)
             print("HH")
-            graph = pd.read_csv("/Users/zaidbhat/GUI/training.csv", index_col = None)
+            graph = pd.read_csv("tmp_dir/graph_train.csv", index_col = None) #/Users/zaidbhat/GUI/training.csv
             c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
-            print("HERE:", c1,c2)
+#            print("HERE:", c1,c2)
             self.graph_widget.plot(c1, c2)
             self.progress.emit(i + 1)
         self.finished.emit()
@@ -539,24 +539,25 @@ class OWPythonScript(OWWidget):
 
         self._cachedDocuments = {}
 
-        self.infoBox = gui.vBox(self.controlArea, 'Info')
-        gui.label(
-            self.infoBox, self,
-            "<p>Execute python script.</p><p>Input variables:<ul><li> " +
-            "<li>".join(map("in_{0}, in_{0}s".format, self.signal_names)) +
-            "</ul></p><p>Output variables:<ul><li>" +
-            "<li>".join(map("out_{0}".format, self.signal_names)) +
-            "</ul></p>"
-        )
+#Remove info box
+#        self.infoBox = gui.vBox(self.controlArea, 'Info')
+#        gui.label(
+#            self.infoBox, self,
+#            "<p>Execute python script.</p><p>Input variables:<ul><li> " +
+#            "<li>".join(map("in_{0}, in_{0}s".format, self.signal_names)) +
+#            "</ul></p><p>Output variables:<ul><li>" +
+#            "<li>".join(map("out_{0}".format, self.signal_names)) +
+#            "</ul></p>"
+#        )
 
         self.libraryList = itemmodels.PyListModel(
             [], self,
             flags=Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable)
 
         self.libraryList.wrap(self.libraryListSource)
-
-        self.controlBox = gui.vBox(self.controlArea, 'Library')
-        self.controlBox.layout().setSpacing(1)
+#
+#        self.controlBox = gui.vBox(self.controlArea, 'Library')
+#        self.controlBox.layout().setSpacing(1)
 
         self.libraryView = QListView(
             editTriggers=QListView.DoubleClicked |
@@ -570,7 +571,8 @@ class OWPythonScript(OWWidget):
         self.libraryView.selectionModel().selectionChanged.connect(
             self.onSelectedScriptChanged
         )
-        self.controlBox.layout().addWidget(self.libraryView)
+        #Z: remove the library widget
+#        self.controlBox.layout().addWidget(self.libraryView)
 
         w = itemmodels.ModelActionsWidget()
 
@@ -610,14 +612,14 @@ class OWPythonScript(OWWidget):
         button.setPopupMode(QToolButton.InstantPopup)
 
         w.layout().setSpacing(1)
-
-        self.controlBox.layout().addWidget(w)
+        #Z: Remove Library widget
+#        self.controlBox.layout().addWidget(w)
 
         self.execute_button = gui.button(self.controlArea, self, 'Run Script', callback=self.commit)
 
 #        self.build_pipeline_button = gui.button(self.controlArea, self, 'Recognise', callback=self.recognise)
-        self.run_pipeline_button = gui.button(self.controlArea, self, 'Fit', callback=self.fit)
         self.build_pipeline_button = gui.button(self.controlArea, self, 'Build Pipeline', callback=self.build_pipeline)
+        self.run_pipeline_button = gui.button(self.controlArea, self, 'Fit', callback=self.fit)
         
         self.produce_button = gui.button(self.controlArea, self, 'Produce', callback=self.produce)
 
@@ -636,7 +638,7 @@ class OWPythonScript(OWWidget):
         self.text = PythonScriptEditor(self)
         self.textBox.layout().addWidget(self.text)
 
-        self.textBox.setAlignment(Qt.AlignVCenter)
+        self.textBox.setAlignment(Qt.AlignTop)
         self.text.setTabStopWidth(4)
 
         self.text.modificationChanged[bool].connect(self.onModificationChanged)
@@ -650,21 +652,14 @@ class OWPythonScript(OWWidget):
         
         
         
-        
-        box = gui.vBox(self, 'Output') #stretch  = 100
+        #To display the outpuit predictions table
+        self.box_ = gui.vBox(self, 'Output') #stretch  = 100
         self.cond_list = QTableWidget(
-            box, showGrid=True, selectionMode=QTableWidget.NoSelection)
-        box.layout().addWidget(self.cond_list)
+            self, showGrid=True, selectionMode=QTableWidget.NoSelection)
+        self.splitCanvas.addWidget(self.box_)
+        self.box_.layout().addWidget(self.cond_list)
         
-        
-        
-        
-        
-        box_graph = gui.vBox(self, 'Graph') #stretch  = 100
-        self.graph_widget  = pg.PlotWidget()
-        box_graph.layout().addWidget(self.graph_widget)
-        
-        
+        self.box_.setAlignment(Qt.AlignVCenter)
         
         
         
@@ -693,21 +688,18 @@ class OWPythonScript(OWWidget):
                                             ancestors={}
                                             )
     def display(self, video_path = None):
-
+        
+        #The name of the button that is clicked on
         rbt = self.sender()
-        #print(rbt.text(), "LLLL")
         video_path = self.media_dir + '/' + str(rbt.text())
-        print(video_path,"LJKH")
         v = VideoPlayer2(video_path)
         v.show()
-#        b = QPushButton('start')
-#        b.clicked.connect(v.callback)
-#        b.show()
-
-        pass
+        
+        
     def add_row(self, df=None):
-#        print(type(result),type(gt))
-#        r,c = 2,3
+        '''
+        Add rows to the Table Widget
+        '''
         r,c = df.shape
         
         self.cond_list.setColumnCount(c)
@@ -716,16 +708,9 @@ class OWPythonScript(OWWidget):
         self.cond_list.horizontalHeader()#.hide()
         self.cond_list.setHorizontalHeaderLabels(list(df.columns))
         
-        
-
         for i in range(r):
             for j in range(c):
-                #change to 1 to make that button work
-                if j==1:
-                    #Z: Make this generic here dont hard code video name column index
-                    #video_path = media_dir + '/'+ str(df.iloc[i,1])
-                    #print("VIDEO PATH: ", video_path)
-
+                if j==1: #Making the column with video path as buttons
                     self.showBtn = gui.button(self.controlArea, self, str(df.iloc[i,j]), callback=self.display)
                     self.cond_list.setCellWidget(i,j,self.showBtn)
                 else:
@@ -951,49 +936,32 @@ class OWPythonScript(OWWidget):
             library = [dict(name=s.name, script=s.script, filename=s.filename)
                        for s in scripts]  # type: List[_ScriptData]
             settings["scriptLibrary"] = library
+            
+            
 
-    def run_pipeline(self):
-        print('run_pipeline')
-        run_pipeline(self.output_list_ending, stdout=self.console)
-        self.console.new_prompt(sys.ps1) # flush the console
-        pass
+#    def run_pipeline(self):
+#
+#        print('run_pipeline')
+#        run_pipeline(self.output_list_ending, stdout=self.console)
+#        self.console.new_prompt(sys.ps1) # flush the console
+#        pass
     
     def build_pipeline(self):
+        '''
+        Build pipeline description
+        '''
         print('build_pipeline')
-#        self.config  = build_pipeline(self.output_list_ending, self.primitive_mapping, stdout=self.console)
         self.pipeline_desc  = build_pipeline(self.output_list_ending, self.primitive_mapping, stdout=self.console)
-        print(self.pipeline_desc)
-        #print("HH", self.config)
+#        print(self.pipeline_desc)
         self.console.new_prompt(sys.ps1) # flush the console
         pass
         
-#    def recognise(self):
-#
-#        print('Recognise')
-#        from autovideo.utils import set_log_path, logger
-#        set_log_path('log.txt')
-#
-#        # Load fitted pipeline
-#        import torch
-#
-#        load_path = "/Users/zaidbhat/autovideo/fitted_pipeline"
-#        fitted_pipeline = torch.load(load_path)
-#        # Produce
-#        from autovideo import produce_by_path
-#        predictions = produce_by_path(fitted_pipeline, '/Users/zaidbhat/autovideo/datasets/demo.avi')
-#
-#        map_label = {0:'brush_hair', 1:'cartwheel', 2: 'catch', 3:'chew', 4:'clap',5:'climb'}
-#        out = map_label[predictions['label'][0]]
-#        logger.info('Detected Action: %s', out)
-   
+
     def fit(self):
         from autovideo.utils import set_log_path, logger
         set_log_path('log.txt')
-        #print(self.build_pipeline(), "BP")
+        #Get dataset directory
         data_dir = self.output_list_ending[0].hyperparameter['dataset_folder']
-#        data_dir = "/Users/zaidbhat/autovideo/datasets/hmdb6"
-#        for i in range(0, len(self.output_list_ending)):
-#            print("LLL", self.output_list_ending[i].hyperparameter)
         train_table_path = os.path.join(data_dir, 'train.csv')
         train_media_dir = os.path.join(data_dir, 'media')
         target_index = 2
@@ -1001,39 +969,9 @@ class OWPythonScript(OWWidget):
         from autovideo import fit, build_pipeline, compute_accuracy_with_preds
         # Read the CSV file
         train_dataset = pd.read_csv(train_table_path)
-
-        # Build pipeline based on configs
-        # Here we can specify the hyperparameters defined in each primitive
-        # The default hyperparameters will be used if not specified
-#        pretrained = False #Does not work for True right now as the relative path is giving in each [primitive for weights loading
-#        alg = 'tsn'
-#        for i in range(0, len(self.output_list_ending)):
-#            for j in ['tsn', 'tsm','r2p1d','r3d','i3d','eco']:
-#                print(self.output_list_ending[i].python_path, "PYTHON PATH", self.output_list_ending[i].id, self.output_list_ending[i].hyperparameter, self.output_list_ending[i].ancestors )
-#                if j in self.output_list_ending[i].python_path:
-#
-#                    alg = j
-#                    pretrained = self.output_list_ending[i].hyperparameters['pretrained']
-#            print(self.output_list_ending[i])
-        
-        #print(alg,pretrained)
-        #print("Console: ", self.console, type(self.console))
-#        config = {
-#            "algorithm": alg,
-#            "load_pretrained": pretrained,
-#        }
-#        print(self.config)
-#        print(self.config, "Final Config")
-#        pipeline1 = build_pipeline(config)
-#        data1 = pipeline1.to_json()
-#        with open('example_pipeline1.json', 'w') as f:
-#            f.write(data1)
-#        print(pipeline1, "KKKKKKKKKKKJSFSHFJSKJD")
         pipeline = self.pipeline_desc
-#        pipeline = build_pipeline(self.config)
-        # Fit
         
-        
+        #Methods tried for graphs
         #Method 2: Works only static not dynamic
 #        stop_flag = Event()
 #        self.timer_thread = Worker()
@@ -1048,12 +986,8 @@ class OWPythonScript(OWWidget):
 #        # Step 5: Connect signals and slots
 #        self.thread.started.connect(self.worker.run)
 #        self.worker.finished.connect(self.thread.quit)
-#
 #        self.thread.start()
-##
-#
-        
-        
+
         _, fitted_pipeline = fit(train_dataset=train_dataset,
                                  train_media_dir=train_media_dir,
                                  target_index=target_index,
@@ -1061,13 +995,18 @@ class OWPythonScript(OWWidget):
 
         # Save the fitted pipeline
         #change using self.output_list_ending[0].hyperparameter['dataset_folder']
-        save_path = '/Users/zaidbhat/autovideo/datasets/hmdb6/fitted_pipeline'
+        tmp_dir = os.path.join("tmp_dir")
+        os.makedirs(tmp_dir, exist_ok=True)
+        self.save_path = os.path.join(tmp_dir, "fitted_pipeline")
+#        print(self.save_path)
         import torch
-        torch.save(fitted_pipeline, save_path)
+        torch.save(fitted_pipeline, self.save_path)
         
         #Method 1: Works somewhat but error that Qwidget cannot be put on thread)
-        self.worker = GraphPlayer("/Users/zaidbhat/GUI/training.csv")
-        #Does not work when putting on GPU
+        self.worker = GraphPlayer("tmp_dir/graph_train.csv")#/Users/zaidbhat/GUI/training.csv")
+        self.worker.show()
+        
+        #Does not work when putting on thread
 #        self.thread = QThread()
 #         # Step 4: Move worker to the thread
 #        self.worker.moveToThread(self.thread)
@@ -1079,19 +1018,23 @@ class OWPythonScript(OWWidget):
 ##        self.worker.progress.connect(self.reportProgress)
 #        # Step 6: Start the thread
 #        self.thread.start()
-        self.worker.show()
+#        self.worker.show()
         
         
 
 
-        
-    def update_graph(self):
-        print("GRAPH")
-        graph = pd.read_csv("/Users/zaidbhat/GUI/training.csv", index_col = None)
-        c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
-#            print("HERE:", c1,c2)
-        self.graph_widget.plot(c1, c2)
+#
+#    def update_graph(self):
+##        print("GRAPH")
+#        graph = pd.read_csv("/Users/zaidbhat/GUI/training.csv", index_col = None)
+#        c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
+##            print("HERE:", c1,c2)
+#        self.graph_widget.plot(c1, c2)
+
     def produce(self):
+        '''
+        Make predictions on test set
+        '''
         from autovideo.utils import set_log_path, logger
         set_log_path('log.txt')
         data_dir = self.output_list_ending[0].hyperparameter['dataset_folder']
@@ -1105,8 +1048,9 @@ class OWPythonScript(OWWidget):
         test_dataset_ = pd.read_csv(test_table_path)
         test_dataset = test_dataset_.drop(['label'], axis=1)
         test_labels = test_dataset_['label']
-        load_path = "/Users/zaidbhat/autovideo/fitted_pipeline"
-
+        self.tmp_dir = os.path.join("tmp_dir")
+        load_path = os.path.join(self.tmp_dir, "fitted_pipeline")
+#        print(load_path,"LOAD")
         # Load fitted pipeline
         import torch
 #        if torch.cuda.is_available():
@@ -1122,8 +1066,11 @@ class OWPythonScript(OWWidget):
                               fitted_pipeline=fitted_pipeline)
 
         # Get accuracy
+        map_label = {0:'brush_hair', 1:'cartwheel', 2: 'catch', 3:'chew', 4:'clap',5:'climb'}
         test_dataset_['predictions'] = predictions['label']
-        print(predictions, test_dataset_)
+        for i in range(len(test_dataset_['predictions'])):
+            test_dataset_['predictions'][i] = map_label[test_dataset_['predictions'][i]]
+#        print(predictions, test_dataset_)
         #self.add_row(test_dataset_, test_media_dir )
         test_acc = compute_accuracy_with_preds(predictions['label'], test_labels)
         self.add_row(test_dataset_)
@@ -1131,11 +1078,8 @@ class OWPythonScript(OWWidget):
         #logger.info('Testing accuracy {:5.4f}'.format(test_acc))
         
     def pipeline_wrapping(self, pipline_in):
-        #print("Pipline_in: ", pipline_in, self.primitive_info )
         self.output_list = pipline_in[0]
-        print("OUTPUT LIST: ", self.output_list)
         self.ancestors_path = pipline_in[1]
-        #print("out", self.output_list, self.ancestors_path)
         self.primitive_info.ancestors['inputs'] = self.ancestors_path
         
         #Z: adding pipeline console widget as the last widget in the pipeline using self.primitive_info
@@ -1143,7 +1087,6 @@ class OWPythonScript(OWWidget):
         self.output_list_ending = self.output_list + [self.primitive_info]
 
         self.primitive_mapping = {}
-        print("OUPUT LENGTH: ", len(self.output_list_ending))
         for i in range(0, len(self.output_list_ending)):
             
             self.primitive_mapping[self.output_list_ending[i].id] = i
@@ -1151,7 +1094,7 @@ class OWPythonScript(OWWidget):
         
 
 class VideoPlayer2(OWWidget):
-    name = "Pipeline1 "
+    name = "Video Player"
     description = "Console1 "
     icon = "icons/PythonScript.svg"
     priority = 31512
@@ -1159,35 +1102,29 @@ class VideoPlayer2(OWWidget):
 
     def __init__(self, video_path = None):
         super().__init__()
-        self.splitCanvas = QSplitter(Qt.Vertical, self.mainArea)
-        self.mainArea.layout().addWidget(self.splitCanvas)
-        self.box = gui.vBox(self, 'Output') #stretch  = 100
-        self.splitCanvas.addWidget(self.box)
-        self.video = QVideoWidget(self.box)
-#        self.video.setFullScreen(True)
-        self.video.resize(620, 250)
-        self.video.move(0, 0)
-        self.player = QMediaPlayer(self.box)
-        self.player.setVideoOutput(self.video)
-#        print("BBBB")
-        #video_path ="/Users/zaidbhat/Desktop/12.mov"
         
-        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(video_path)))#"/Users/zaidbhat/autovideo/datasets/hmdb6/media/_Boom_Snap_Clap__challenge_clap_u_nm_np1_fr_med_0.avi"
-        self.execute_button = gui.button(self.mainArea, self, 'Run Script', callback=self.callback1)
-#        execute_button = gui.button(self, self, 'Run Video', callback=self.callback1)
-#        execute_button.show()
-#        b = QPushButton('start')
-#        b.clicked.connect(self.callback)
-#        b.show()
+        self.splitCanvas = QSplitter(self.mainArea)
+        self.mainArea.layout().addWidget(self.splitCanvas)
+#        self.box = gui.vBox(self, 'Output') #stretch  = 100
+#        self.splitCanvas.addWidget(self.box)
+        self.video = QVideoWidget(self.mainArea)
+#        self.video.setFullScreen(True)
+        self.video.resize(480, 360)
+        self.video.move(0, 0)
+        self.player = QMediaPlayer(self.mainArea)
+        self.player.setVideoOutput(self.video)
+
+        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(video_path)))
+        self.execute_button = gui.button(self.controlArea, self, 'Play Video', callback=self.callback1)
+#        self.execute_button1 = gui.button(self.controlArea, self, 'Play Video', callback=self.callback1)
 
     def callback1(self):
         self.player.setPosition(0) # to start at the beginning of the video every time
-#        self.video.show()
         self.player.play()
 
 
 class GraphPlayer(OWWidget):
-    name = "Graph"
+    name = "Graph Player"
     description = "Console1 "
     icon = "icons/PythonScript.svg"
     priority = 31513
@@ -1195,46 +1132,33 @@ class GraphPlayer(OWWidget):
 
     def __init__(self, graph_path = None):
         super().__init__()
-        self.splitCanvas = QSplitter(Qt.Vertical, self.mainArea)
+        self.splitCanvas = QSplitter( self.mainArea)
         self.mainArea.layout().addWidget(self.splitCanvas)
-        self.box = gui.vBox(self, 'Output') #stretch  = 100
-#        self.splitCanvas.addWidget(self.box)
-#        self.video = QVideoWidget(self.box)
-##        self.video.setFullScreen(True)
-#        self.video.resize(620, 250)
-#        self.video.move(0, 0)
-#        self.player = QMediaPlayer(self.box)
-#        self.player.setVideoOutput(self.video)
-##        print("BBBB")
-#        #video_path ="/Users/zaidbhat/Desktop/12.mov"
-#
-#        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(video_path)))#"/Users/zaidbhat/autovideo/datasets/hmdb6/media/_Boom_Snap_Clap__challenge_clap_u_nm_np1_fr_med_0.avi"
+#        self.box = gui.vBox(self, 'Output') #stretch  = 100
+
         self.graph_path = graph_path
         graph = pd.read_csv(graph_path, index_col = None)
         self.graphWidget = pg.PlotWidget()
-        self.splitCanvas.addWidget(self.graphWidget)
-#        self.setCentralWidget(self.graphWidget)
-        c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
-        print("HERE:", c1,c2)
-        self.graphWidget.plot(c1, c2)
+        self.graphWidget.setLabel('left', text = "Accuracy")
+        self.graphWidget.setLabel('bottom', text = "Epochs")
+        self.graphWidget.setYRange(0,100)
+        self.graphWidget.setTitle("Accuracy vs Epochs")
         
-        self.execute_button = gui.button(self.mainArea, self, 'Run Script', callback=self.callback1)
-#        execute_button = gui.button(self, self, 'Run Video', callback=self.callback1)
-#        execute_button.show()
-#        b = QPushButton('start')
-#        b.clicked.connect(self.callback)
-#        b.show()
+        font=QFont()
+        font.setPixelSize(200)
+        self.graphWidget.getAxis("bottom").tickFont = font
+        
+        self.splitCanvas.addWidget(self.graphWidget)
+        
+        self.execute_button = gui.button(self.mainArea, self, 'Plot Graph', callback=self.callback1)
+
 
     def callback1(self):
-        return
-        while True:
-            graph = pd.read_csv(self.graph_path, index_col = None)
-            c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
-#            print("HERE:", c1,c2)
-            self.graphWidget.plot(c1, c2)
-#        self.player.setPosition(0) # to start at the beginning of the video every time
-#        self.video.show()
-#        self.player.play()
+
+        graph = pd.read_csv(self.graph_path, index_col = None)
+        c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
+        self.graphWidget.plot(c1, c2)
+
 
 
 

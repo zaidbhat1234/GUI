@@ -6,7 +6,6 @@ import sys
 
 def build_pipeline(pipepline_info, pipepline_mapping, stdout=None):
     
-    #print(pipepline_info, pipepline_mapping, "LKJK")
     
     default_stdout = sys.stdout
     if stdout is not None:
@@ -76,16 +75,11 @@ def build_pipeline(pipepline_info, pipepline_mapping, stdout=None):
                 
                 hyper_value = hyperparameters[hyper]
                 if hyper =='load_pretrained':
-#                    print(hyper_value,"KKKAKAKAKKAKAKAKKA")
                     if hyper_value =='False':
                         hyper_value = False
                     else:
                         hyper_value = True
-#                    print(hyper_value, type(hyper_value))
-#                if flag ==1:
-#
-#                    dict_hyper[str(hyper)] = hyper_value
-                    
+
                 step.add_hyperparameter(name=hyper, argument_type=ArgumentType.VALUE, data=hyper_value)
 
             step.add_output('produce')
