@@ -16,9 +16,9 @@ def widget_discovery(discovery):
         #"Orange.widgets.data",
         #"Orange.widgets.visualize",
         "Orange.widgets.data_processing",
+        "Orange.widgets.video_preprocessing",
+        "Orange.widgets.video_augmentation",
         "Orange.widgets.recognition_models"
-        #"Orange.widgets.timeseries_processing",
-        #"Orange.widgets.feature_analysis",
         #"Orange.widgets.detection_algorithm",
         #"Orange.widgets.reinforcement"
     ]

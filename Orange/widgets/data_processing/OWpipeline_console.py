@@ -436,7 +436,7 @@ class Worker1(QObject):
     def __init__(self, graph_widget = None):
         QThread.__init__(self)
         self.graph_widget = graph_widget
-        print("INSIDE", self.graph_widget)
+#        print("INSIDE", self.graph_widget)
 #        self.stopped = event
         
     def run(self):
@@ -444,8 +444,8 @@ class Worker1(QObject):
         """Long-running task."""
         for i in range(5):
             sleep(5)
-            print("HH")
-            graph = pd.read_csv("tmp_dir/graph_train.csv", index_col = None) #/Users/zaidbhat/GUI/training.csv
+#            print("HH")
+            graph = pd.read_csv("tmp/graph_train.csv", index_col = None) #/Users/zaidbhat/GUI/training.csv
             c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
 #            print("HERE:", c1,c2)
             self.graph_widget.plot(c1, c2)
@@ -622,6 +622,30 @@ class OWPythonScript(OWWidget):
         self.run_pipeline_button = gui.button(self.controlArea, self, 'Fit', callback=self.fit)
         
         self.produce_button = gui.button(self.controlArea, self, 'Produce', callback=self.produce)
+        self.search_button = gui.button(self.controlArea, self, 'Search', callback=self.search)
+        
+        
+        #To take search space
+        
+        
+#        self.box_1 = gui.vBox(self, 'SS') #stretch  = 100
+#        self.cond_list1 = QTableWidget(
+#            self, showGrid=True, selectionMode=QTableWidget.NoSelection)
+#        self.splitCanvas.addWidget(self.box_1)
+#        self.box_1.layout().addWidget(self.cond_list1)
+#
+#        self.box_1.setAlignment(Qt.AlignTop)
+#        self.textBox1 = gui.vBox(self, 'SS')
+#        self.controlArea.addWidget(self.textBox1)
+#        self.text1 = PythonScriptEditor(self)
+#        self.textBox1.layout().addWidget(self.text1)
+
+#        self.textBox1.setAlignment(Qt.AlignTop)
+#        self.text.setTabStopWidth(4)
+
+#        self.text1.modificationChanged[bool].connect(self.onModificationChanged)
+
+        
 
         run = QAction("Run script", self, triggered=self.commit,
                       shortcut=QKeySequence(Qt.ControlModifier | Qt.Key_R))
@@ -649,7 +673,14 @@ class OWPythonScript(OWWidget):
         action.setShortcutContext(Qt.WidgetWithChildrenShortcut)
         action.triggered.connect(self.saveScript)
         
-        
+#        #To display the outpuit predictions table
+#        self.box_1 = gui.vBox(self, 'SS') #stretch  = 100
+#        self.cond_list1 = QTableWidget(
+#            self, showGrid=True, selectionMode=QTableWidget.NoSelection)
+#        self.splitCanvas.addWidget(self.box_1)
+#        self.box_1.layout().addWidget(self.cond_list1)
+#
+#        self.box_1.setAlignment(Qt.AlignTop)
         
         
         #To display the outpuit predictions table
@@ -695,6 +726,23 @@ class OWPythonScript(OWWidget):
         v = VideoPlayer2(video_path)
         v.show()
         
+    def search_space(self):
+        r,c = 5,2
+        self.cond_list1.setColumnCount(c)
+        self.cond_list1.setRowCount(r)
+        self.cond_list1.verticalHeader()#.hide()
+        self.cond_list1.horizontalHeader()#.hide()
+        ss = ["algorithm", "learning_rate", "momentum","weight_decay", "num_segments"]
+#        search_space = {
+#        "algorithm": tune.choice(["tsn"]),
+#        "learning_rate": tune.uniform(0.0001, 0.001),
+#        "momentum": tune.uniform(0.9,0.99),
+#        "weight_decay": tune.uniform(5e-4,1e-3),
+#        "num_segments": tune.choice([8,16,32]),
+#    }
+        for i in range(r):
+            self.cond_list1.setItem(i,0, QTableWidgetItem(ss[i]))
+                
         
     def add_row(self, df=None):
         '''
@@ -953,6 +1001,10 @@ class OWPythonScript(OWWidget):
         print('build_pipeline')
         self.pipeline_desc  = build_pipeline(self.output_list_ending, self.primitive_mapping, stdout=self.console)
 #        print(self.pipeline_desc)
+        import sys
+        sys.stdout = self.console
+        sys.stdout.flush()
+#        self.console.flush()
         self.console.new_prompt(sys.ps1) # flush the console
         pass
         
@@ -995,7 +1047,7 @@ class OWPythonScript(OWWidget):
 
         # Save the fitted pipeline
         #change using self.output_list_ending[0].hyperparameter['dataset_folder']
-        tmp_dir = os.path.join("tmp_dir")
+        tmp_dir = os.path.join("tmp")
         os.makedirs(tmp_dir, exist_ok=True)
         self.save_path = os.path.join(tmp_dir, "fitted_pipeline")
 #        print(self.save_path)
@@ -1003,7 +1055,7 @@ class OWPythonScript(OWWidget):
         torch.save(fitted_pipeline, self.save_path)
         
         #Method 1: Works somewhat but error that Qwidget cannot be put on thread)
-        self.worker = GraphPlayer("tmp_dir/graph_train.csv")#/Users/zaidbhat/GUI/training.csv")
+        self.worker = GraphPlayer("tmp/graph_train.csv")#/Users/zaidbhat/GUI/training.csv")
         self.worker.show()
         
         #Does not work when putting on thread
@@ -1031,6 +1083,56 @@ class OWPythonScript(OWWidget):
 ##            print("HERE:", c1,c2)
 #        self.graph_widget.plot(c1, c2)
 
+    def search(self):
+        import ray
+        from ray import tune
+        from hyperopt import hp
+        from autovideo.searcher import RaySearcher
+        data_dir = self.output_list_ending[0].hyperparameter['dataset_folder']
+#        print("SEARCH", data_dir)
+        train_table_path = os.path.join(data_dir, 'train.csv')
+        valid_table_path = os.path.join(data_dir, 'test.csv')
+        train_media_dir = os.path.join(data_dir, 'media')
+        valid_media_dir = train_media_dir
+
+        train_dataset = pd.read_csv(train_table_path)
+        valid_dataset = pd.read_csv(valid_table_path)
+
+        searcher = RaySearcher(
+            train_dataset=train_dataset,
+            train_media_dir=train_media_dir,
+            valid_dataset=valid_dataset,
+            valid_media_dir=valid_media_dir
+        )
+
+        #Search Space
+        search_space = {
+            "algorithm": tune.choice(["tsn"]),
+            "learning_rate": tune.uniform(0.0001, 0.001),
+            "momentum": tune.uniform(0.9,0.99),
+            "weight_decay": tune.uniform(5e-4,1e-3),
+            "num_segments": tune.choice([3]),
+        }
+        alg = 'hyperopt'
+        num_samples = 1
+        # Tuning
+        config = {
+            "searching_algorithm": alg,
+            "num_samples": num_samples,
+        }
+
+        best_config = searcher.search(
+            search_space=search_space,
+            config=config
+        )
+
+        print("Best config: ", best_config)
+        print("Search complete")
+        import sys
+        sys.stdout = self.console
+        sys.stdout.flush()
+        self.console.new_prompt(sys.ps1) # flush the console
+
     def produce(self):
         '''
         Make predictions on test set
@@ -1038,7 +1140,7 @@ class OWPythonScript(OWWidget):
         from autovideo.utils import set_log_path, logger
         set_log_path('log.txt')
         data_dir = self.output_list_ending[0].hyperparameter['dataset_folder']
-        test_table_path = os.path.join(data_dir, 'test_mov.csv')
+        test_table_path = os.path.join(data_dir, 'test.csv')
         test_media_dir = os.path.join(data_dir, 'media')
         self.media_dir = test_media_dir
         target_index = 2
@@ -1048,7 +1150,7 @@ class OWPythonScript(OWWidget):
         test_dataset_ = pd.read_csv(test_table_path)
         test_dataset = test_dataset_.drop(['label'], axis=1)
         test_labels = test_dataset_['label']
-        self.tmp_dir = os.path.join("tmp_dir")
+        self.tmp_dir = os.path.join("tmp")
         load_path = os.path.join(self.tmp_dir, "fitted_pipeline")
 #        print(load_path,"LOAD")
         # Load fitted pipeline
@@ -1138,6 +1240,9 @@ class GraphPlayer(OWWidget):
 
         self.graph_path = graph_path
         graph = pd.read_csv(graph_path, index_col = None)
+        pg.setConfigOption('background', 'w')
+        pg.setConfigOption('foreground', 'k')
+        self.pen = pg.mkPen(color=(173, 216, 230), width=4.5)
         self.graphWidget = pg.PlotWidget()
         self.graphWidget.setLabel('left', text = "Accuracy")
         self.graphWidget.setLabel('bottom', text = "Epochs")
@@ -1154,10 +1259,10 @@ class GraphPlayer(OWWidget):
 
 
     def callback1(self):
-
+#        print("YAHAN", self.graph_path)
         graph = pd.read_csv(self.graph_path, index_col = None)
         c1,c2 = np.array(graph.iloc[:,0]), np.array(graph.iloc[:,1])
-        self.graphWidget.plot(c1, c2)
+        self.graphWidget.plot(c1, c2, pen = self.pen)
 
 
 

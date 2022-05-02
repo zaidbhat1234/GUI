@@ -16,6 +16,8 @@ def build_pipeline(pipepline_info, pipepline_mapping, stdout=None):
     pipeline_description.add_input(name='inputs')
     data1 = None
     dict_hyper = {}
+    counter = 0 #For keeping track of the placeholder for video procesing fake primitive
+    flag_c = 0 #Same as above purpose
     for primitive_info in pipepline_info:
         
         #print("PIPELINE DESCRIPTOION: ", pipeline_description)
@@ -35,14 +37,21 @@ def build_pipeline(pipepline_info, pipepline_mapping, stdout=None):
         elif primitive_info.python_path == 'ENDING':
 
             ancestors = primitive_info.ancestors
-            end_step_num = pipepline_mapping[ancestors['inputs']] - 1
+            end_step_num = pipepline_mapping[ancestors['inputs']] - 1 - flag_c
             pipeline_description.add_output(name='output predictions', data_reference='steps.' + str(end_step_num) + '.produce')
 
         else:
+            counter+=1
             # print(primitive_info.python_path)
+            if counter ==2:
+                flag_c = 1
+                continue
+            if counter ==3:
+                flag_c = 2
+                continue
             primitive = index.get_primitive(primitive_info.python_path)
             step = PrimitiveStep(primitive=primitive)
-#            print("STEP", step, primitive)
+            print("STEP:", step, primitive, ":")
 
             hyperparameters = primitive_info.hyperparameter
             ancestors = primitive_info.ancestors
@@ -53,10 +62,11 @@ def build_pipeline(pipepline_info, pipepline_mapping, stdout=None):
             #alg = None
             if ancestors['inputs'] != 0:
                 for ances_key in ancestors.keys():
-#                    print("CONST: ", ances_key, ancestors[ances_key], pipepline_mapping)
+                    print("CONST: ", ances_key, ancestors[ances_key], pipepline_mapping)
 #                    print("KKKK",ances_key, ancestors[ances_key], pipepline_mapping[ancestors[ances_key]] - 1)
 
-                    step_num = pipepline_mapping[ancestors[ances_key]] - 1
+                    step_num = pipepline_mapping[ancestors[ances_key]] - 1 - flag_c
+                    print("STEP NUM:", step_num)
 #                    if 'recognition' in str(primitive):
 #                        dict_hyper['algorithm'] = str(primitive).split('.')[-1]
 #                        flag = 1
